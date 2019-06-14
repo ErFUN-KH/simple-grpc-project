@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"github.com/ErFUN-KH/simple-grpc-project/calculatorpb"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"io"
 	"log"
 	"time"
@@ -27,7 +29,12 @@ func main() {
 
 	//doClientStreaming(c)
 
-	doBiDiStreaming(c)
+	//doBiDiStreaming(c)
+
+	// Correct call
+	doSquareRoot(c, 10)
+	// Error call
+	doSquareRoot(c, -3)
 }
 
 func doSum(c calculatorpb.CalculatorServiceClient) {
@@ -146,4 +153,26 @@ func doBiDiStreaming(c calculatorpb.CalculatorServiceClient) {
 	}()
 
 	<-waitingForChannel
+}
+
+func doSquareRoot(c calculatorpb.CalculatorServiceClient, number int32) {
+	fmt.Println("Starting to do a SquareRoot Unary RPC")
+
+	res, err := c.SquareRoot(context.Background(), &calculatorpb.SquareRootRequest{Number: number})
+	if err != nil {
+		resError, ok := status.FromError(err)
+		if ok {
+			// Actual error from gRPC (user error)
+			fmt.Printf("Error message from server: %v\n", resError.Message())
+			fmt.Println(resError.Code())
+			if resError.Code() == codes.InvalidArgument {
+				fmt.Println("We probably sent a negative number")
+				return
+			}
+		} else {
+			log.Printf("Big error calling SquareRoot: %v", err)
+			return
+		}
+	}
+	fmt.Printf("Result of square root of %v: %v\n\n", number, res.NumberRoot)
 }
