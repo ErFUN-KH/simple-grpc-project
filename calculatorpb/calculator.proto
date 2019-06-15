@@ -44,6 +44,15 @@ message SquareRootResponse {
     double number_root = 1;
 }
 
+message SumWithDeadLineRequest {
+    int32 first_number = 1;
+    int32 second_umber = 2;
+}
+
+message SumWithDeadLineResponse {
+    int32 sum_result = 1;
+}
+
 service CalculatorService {
     // Unary
     rpc Sum (SumRequest) returns (SumResponse) {};
@@ -59,4 +68,7 @@ service CalculatorService {
 
     // Error Handing
     rpc SquareRoot (SquareRootRequest) returns (SquareRootResponse) {};
+
+    // Dead Line
+    rpc SumWithDeadLine (SumWithDeadLineRequest) returns (SumWithDeadLineResponse) {};
 }

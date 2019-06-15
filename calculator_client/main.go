@@ -32,9 +32,12 @@ func main() {
 	//doBiDiStreaming(c)
 
 	// Correct call
-	doSquareRoot(c, 10)
+	//doSquareRoot(c, 10)
 	// Error call
-	doSquareRoot(c, -3)
+	//doSquareRoot(c, -3)
+
+	doSumWithDeadLine(c, 5*time.Second)
+	doSumWithDeadLine(c, 3*time.Second)
 }
 
 func doSum(c calculatorpb.CalculatorServiceClient) {
@@ -166,13 +169,39 @@ func doSquareRoot(c calculatorpb.CalculatorServiceClient, number int32) {
 			fmt.Printf("Error message from server: %v\n", resError.Message())
 			fmt.Println(resError.Code())
 			if resError.Code() == codes.InvalidArgument {
-				fmt.Println("We probably sent a negative number")
-				return
+				log.Fatalln("We probably sent a negative number")
 			}
 		} else {
-			log.Printf("Big error calling SquareRoot: %v", err)
-			return
+			log.Fatalf("Big error calling SquareRoot: %v", err)
 		}
 	}
 	fmt.Printf("Result of square root of %v: %v\n\n", number, res.NumberRoot)
+}
+
+func doSumWithDeadLine(c calculatorpb.CalculatorServiceClient, time time.Duration) {
+	fmt.Println("Starting to do a SumWithDeadLine RPC")
+
+	req := &calculatorpb.SumWithDeadLineRequest{
+		FirstNumber: 40,
+		SecondUmber: 2,
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), time)
+	defer cancel()
+
+	res, err := c.SumWithDeadLine(ctx, req)
+	if err != nil {
+		resError, ok := status.FromError(err)
+		if ok {
+			if resError.Code() == codes.DeadlineExceeded {
+				log.Fatalln("Timeout was hit! Deadline was exceeded")
+			} else {
+				log.Fatalf("Unexpected error: %v", err)
+			}
+		} else {
+			log.Fatalf("Error while calling sum RPC: %v", err)
+		}
+	}
+
+	log.Printf("Response from server: %v\n\n", res.SumResult)
 }

@@ -11,6 +11,7 @@ import (
 	"log"
 	"math"
 	"net"
+	"time"
 )
 
 type server struct{}
@@ -140,4 +141,29 @@ func (*server) SquareRoot(ctx context.Context, req *calculatorpb.SquareRootReque
 	return &calculatorpb.SquareRootResponse{
 		NumberRoot: math.Sqrt(float64(number)),
 	}, nil
+}
+
+func (*server) SumWithDeadLine(ctx context.Context, req *calculatorpb.SumWithDeadLineRequest) (*calculatorpb.SumWithDeadLineResponse, error) {
+	fmt.Printf("Received SumWithDeadLine RPC: %v\n", req)
+
+	for i := 0; i < 3; i++ {
+
+		if ctx.Err() == context.Canceled {
+			fmt.Println("The client canceled the request")
+			return nil, status.Error(codes.Canceled, "The client canceled the request")
+		}
+
+		time.Sleep(1 * time.Second)
+	}
+
+	firstNumber := req.GetFirstNumber()
+	secondNumber := req.GetSecondUmber()
+
+	sum := firstNumber + secondNumber
+
+	res := &calculatorpb.SumWithDeadLineResponse{
+		SumResult: sum,
+	}
+
+	return res, nil
 }
