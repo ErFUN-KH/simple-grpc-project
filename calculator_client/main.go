@@ -6,6 +6,7 @@ import (
 	"github.com/ErFUN-KH/simple-grpc-project/calculatorpb"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/status"
 	"io"
 	"log"
@@ -15,7 +16,15 @@ import (
 func main() {
 	fmt.Println("Client is running...")
 
-	cc, err := grpc.Dial("localhost:50051", grpc.WithInsecure())
+	// SSL config
+	certFile := "../ssl/ca.crt"
+	creds, sslErr := credentials.NewClientTLSFromFile(certFile, "api.example.com")
+	if sslErr != nil {
+		log.Fatalf("Error while loading CA trust certifiate: %v", sslErr)
+	}
+	opts := grpc.WithTransportCredentials(creds)
+
+	cc, err := grpc.Dial("localhost:50051", opts)
 	if err != nil {
 		log.Fatalf("could not connect to server: %v", err)
 	}

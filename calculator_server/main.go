@@ -6,6 +6,7 @@ import (
 	"github.com/ErFUN-KH/simple-grpc-project/calculatorpb"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/status"
 	"io"
 	"log"
@@ -25,8 +26,17 @@ func main() {
 		log.Fatalf("Failed to listen: %v", err)
 	}
 
+	// SSL config
+	certFile := "../ssl/server.crt"
+	keyFile := "../ssl/server.pem"
+	creds, sslErr := credentials.NewServerTLSFromFile(certFile, keyFile)
+	if sslErr != nil {
+		log.Fatalf("Faild loading certificates: %v", sslErr)
+	}
+	opts := grpc.Creds(creds)
+
 	// Make a gRPC server
-	grpcServer := grpc.NewServer()
+	grpcServer := grpc.NewServer(opts)
 	calculatorpb.RegisterCalculatorServiceServer(grpcServer, &server{})
 
 	// Run the gRPC server
