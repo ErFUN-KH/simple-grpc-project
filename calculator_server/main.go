@@ -7,6 +7,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/reflection"
 	"google.golang.org/grpc/status"
 	"io"
 	"log"
@@ -27,17 +28,24 @@ func main() {
 	}
 
 	// SSL config
-	certFile := "../ssl/server.crt"
-	keyFile := "../ssl/server.pem"
-	creds, sslErr := credentials.NewServerTLSFromFile(certFile, keyFile)
-	if sslErr != nil {
-		log.Fatalf("Faild loading certificates: %v", sslErr)
+	tls := false
+	opts := []grpc.ServerOption{}
+	if tls {
+		certFile := "../ssl/server.crt"
+		keyFile := "../ssl/server.pem"
+		creds, sslErr := credentials.NewServerTLSFromFile(certFile, keyFile)
+		if sslErr != nil {
+			log.Fatalf("Faild loading certificates: %v", sslErr)
+		}
+		opts = append(opts, grpc.Creds(creds))
 	}
-	opts := grpc.Creds(creds)
 
 	// Make a gRPC server
-	grpcServer := grpc.NewServer(opts)
+	grpcServer := grpc.NewServer(opts...)
 	calculatorpb.RegisterCalculatorServiceServer(grpcServer, &server{})
+
+	// Register reflection service on gRPC server.
+	reflection.Register(grpcServer)
 
 	// Run the gRPC server
 	if err := grpcServer.Serve(lis); err != nil {

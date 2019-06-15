@@ -17,12 +17,16 @@ func main() {
 	fmt.Println("Client is running...")
 
 	// SSL config
-	certFile := "../ssl/ca.crt"
-	creds, sslErr := credentials.NewClientTLSFromFile(certFile, "api.example.com")
-	if sslErr != nil {
-		log.Fatalf("Error while loading CA trust certifiate: %v", sslErr)
+	tls := false
+	opts := grpc.WithInsecure()
+	if tls {
+		certFile := "../ssl/ca.crt"
+		creds, sslErr := credentials.NewClientTLSFromFile(certFile, "api.example.com")
+		if sslErr != nil {
+			log.Fatalf("Error while loading CA trust certifiate: %v", sslErr)
+		}
+		opts = grpc.WithTransportCredentials(creds)
 	}
-	opts := grpc.WithTransportCredentials(creds)
 
 	cc, err := grpc.Dial("localhost:50051", opts)
 	if err != nil {
